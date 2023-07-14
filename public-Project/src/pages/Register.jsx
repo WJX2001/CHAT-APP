@@ -4,6 +4,8 @@ import { useNavigate, Link } from 'react-router-dom'
 import Logo from '../assets/logo.svg'
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import axios from "axios"
+import { registerRoute } from '../utils/APIRoutes'
 export default function Register() {
 
   const toastOptions = {
@@ -20,9 +22,17 @@ export default function Register() {
     password: '',
     confirmPassword: ''  
   })
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    handleValidation()
+    if(handleValidation()) {
+      const {password,confirmPassword,username,email} = values
+      // 与远程参数做校验
+      const {data} = await axios.post(registerRoute,{
+        username,
+        email,
+        password
+      })
+    }
   }
 
   const handleChange = (event) => {
@@ -44,15 +54,17 @@ export default function Register() {
         "username should be greater than 3 characters",toastOptions
       ) 
       return false
-    } else if(password.length <8) {
+    }else if(email === '') {
+      toast.error("email is required",toastOptions)
+      return false
+    } 
+    
+    else if(password.length <8) {
       toast.error (
         "password should be greater than 8 characters",toastOptions
       )
       return false
-    } else if(email === '') {
-      toast.error("email is required",toastOptions)
-      return false
-    }
+    } 
     return true
   }
 
