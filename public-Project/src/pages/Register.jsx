@@ -6,8 +6,21 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios"
 import { registerRoute } from '../utils/APIRoutes'
+
+
+
 export default function Register() {
 
+  // 使用编程式导航
+  const navigate = useNavigate()
+  const [values,setValues] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: ''  
+  })
+
+  // 出现错误后 弹框的配置
   const toastOptions = {
     position: "bottom-right",
     autoClose: 8000,
@@ -16,15 +29,11 @@ export default function Register() {
     theme: "dark",
   };
 
-  const [values,setValues] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: ''  
-  })
+  
   const handleSubmit = async (event) => {
     event.preventDefault()
     if(handleValidation()) {
+      console.log('正在验证哦')
       const {password,confirmPassword,username,email} = values
       // 与远程参数做校验
       const {data} = await axios.post(registerRoute,{
@@ -32,6 +41,17 @@ export default function Register() {
         email,
         password
       })
+      console.log(data.status)
+      if(data.status === false) {
+        toast.error(data.msg,toastOptions)
+      }
+
+      if(data.status === true) {
+        localStorage.setItem('chat-app-user',JSON.stringify(data.user))
+        navigate("/")
+      }
+      
+      
     }
   }
 
