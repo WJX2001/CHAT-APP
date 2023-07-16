@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from "styled-components"
-export default Chat = () => {
+export default function Chat () {
   return (
    
     <Container>
