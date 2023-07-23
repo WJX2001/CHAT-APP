@@ -1,11 +1,63 @@
-import React from 'react'
+import React,{useState,useEffect} from 'react'
 import styled from "styled-components"
+import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
+import { allUsersRoute } from '../utils/APIRoutes'
+import Contacts from '../components/Contacts'
+import Welcome from '../components/Welcome'
+import ChatContainer from '../components/ChatContainer'
 export default function Chat () {
+  const [contacts,setContacts] = useState([])
+  const [currentUser,setCurrentUser] = useState(undefined)
+  const [currentChat, setCurrentChat] = useState(undefined);
+  const [isLoaded,setIsLoaded] = useState(false)
+  const navigate = useNavigate()
+
+  useEffect(() => {   // 初始化判断本地是否存储用户信息
+     const initState = async () => {
+      if(!localStorage.getItem('chat-app-user')) {
+        navigate('/login')
+      } else {
+        setCurrentUser(await JSON.parse(localStorage.getItem('chat-app-user')))
+        setIsLoaded(true)
+      }
+     }
+     initState()
+  },[])
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if(currentUser) {   // 检测是否有当前用户，如果有的话再去检查头像是否设定
+        if(currentUser.isAvatarImageSet) {
+          const data = await axios.get(`${allUsersRoute}/${currentUser._id}`)
+          setContacts(data.data)
+        } else {
+          navigate('/setAvatar')
+        }
+      }
+    }
+    fetchData()
+  },[currentUser])
+
+
+  const handleChatChange = (chat) => {
+    setCurrentChat(chat)
+  }
+
   return (
-   
     <Container>
       <div className="container">
-
+        <Contacts 
+          contacts={contacts} 
+          currentUser={currentUser} 
+          changeChat={handleChatChange}
+        />
+        {isLoaded && currentChat === undefined ? (
+          <Welcome currentUser = {currentUser} />
+        ): (
+          <ChatContainer currentChat={currentChat} />
+        )}
+        
       </div>
     </Container>
    

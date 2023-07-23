@@ -81,3 +81,19 @@ module.exports.setAvatar = async (req, res, next) => {
     next(ex)
   }
 }
+
+// 获取用户
+module.exports.getAllUsers = async (req, res, next) => {
+  try {
+    // 选择所有用户但不包括我们本身用户
+    const users = await User.find({ _id: {$ne: req.params.id }}).select ([
+      "email",
+      "username",
+      "avatarImage",
+      "_id"
+    ]);
+    return res.json(users )  // 将查询结果返回
+  } catch(ex) {
+    next(ex)
+  }
+}
