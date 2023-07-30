@@ -1,34 +1,45 @@
-import React,{useState,useEffect} from 'react'
-import styled from "styled-components"
+import React, { useState, useEffect, useRef } from 'react'
+import styled from 'styled-components'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
-import { allUsersRoute } from '../utils/APIRoutes'
+import { allUsersRoute, host } from '../utils/APIRoutes'
 import Contacts from '../components/Contacts'
 import Welcome from '../components/Welcome'
 import ChatContainer from '../components/ChatContainer'
-export default function Chat () {
-  const [contacts,setContacts] = useState([])
-  const [currentUser,setCurrentUser] = useState(undefined)
-  const [currentChat, setCurrentChat] = useState(undefined);
-  const [isLoaded,setIsLoaded] = useState(false)
+import { io } from 'socket.io-client'
+export default function Chat() {
+  const socket = useRef()
+  const [contacts, setContacts] = useState([])
+  const [currentUser, setCurrentUser] = useState(undefined)
+  const [currentChat, setCurrentChat] = useState(undefined)
+  const [isLoaded, setIsLoaded] = useState(false)
   const navigate = useNavigate()
 
-  useEffect(() => {   // 初始化判断本地是否存储用户信息
-     const initState = async () => {
-      if(!localStorage.getItem('chat-app-user')) {
+  useEffect(() => {
+    if (currentUser) {
+      socket.current = io(host)
+      socket.current.emit('add-user', currentUser?._id)
+    }
+  }, [currentUser])
+
+  useEffect(() => {
+    // 初始化判断本地是否存储用户信息
+    const initState = async () => {
+      if (!localStorage.getItem('chat-app-user')) {
         navigate('/login')
       } else {
         setCurrentUser(await JSON.parse(localStorage.getItem('chat-app-user')))
         setIsLoaded(true)
       }
-     }
-     initState()
-  },[])
+    }
+    initState()
+  }, [])
 
   useEffect(() => {
     const fetchData = async () => {
-      if(currentUser) {   // 检测是否有当前用户，如果有的话再去检查头像是否设定
-        if(currentUser.isAvatarImageSet) {
+      if (currentUser) {
+        // 检测是否有当前用户，如果有的话再去检查头像是否设定
+        if (currentUser.isAvatarImageSet) {
           const data = await axios.get(`${allUsersRoute}/${currentUser._id}`)
           setContacts(data.data)
         } else {
@@ -37,8 +48,7 @@ export default function Chat () {
       }
     }
     fetchData()
-  },[currentUser])
-
+  }, [currentUser])
 
   const handleChatChange = (chat) => {
     setCurrentChat(chat)
@@ -47,23 +57,24 @@ export default function Chat () {
   return (
     <Container>
       <div className="container">
-        <Contacts 
-          contacts={contacts} 
-          currentUser={currentUser} 
+        <Contacts
+          contacts={contacts}
+          currentUser={currentUser}
           changeChat={handleChatChange}
         />
         {isLoaded && currentChat === undefined ? (
-          <Welcome currentUser = {currentUser} />
-        ): (
-          <ChatContainer currentChat={currentChat} />
+          <Welcome currentUser={currentUser} />
+        ) : (
+          <ChatContainer
+            currentChat={currentChat}
+            currentUser={currentUser}
+            socket={socket}
+          />
         )}
-        
       </div>
     </Container>
-   
   )
 }
-
 
 const Container = styled.div`
   height: 100vh;
@@ -84,4 +95,4 @@ const Container = styled.div`
       grid-template-columns: 35% 65%;
     }
   }
-`;
+`
